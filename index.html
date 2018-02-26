@@ -6,7 +6,7 @@
   <script src="https://sdk.altvr.com/libs/altspace.js/2.6.0/altspace.js"></script>
 </head>
 <body>
-<a-scene altspace='fullspace: false; verticalAlign: bottom'>
+<a-scene altspace='fullspace: false; verticalAlign: bottom' sync-system='author: BenG; app: Tarot; refUrl: https://altvr-apps.firebaseio.com/'>
   <a-box id='table' position='0 1 0' scale='2.1 .1 1.2' color='#300'></a-box>
 
   <a-box id='deck' position='-.75 1.1 0' scale='.4 .1 .6' color='#c6c6b1'></a-box>
@@ -34,129 +34,188 @@
   <a-box id='animTest' position='-1.8 100.8 0' scale='.1 .1 .1' color='red'></a-box>
 </a-scene>
 <script>
-	var cardsPlaced = false;
-	var cardList = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77];
-	//var cardList = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21];
-	var top3 = [];
-	var cardNames = ['The Fool','The Magician','The High Priestess','The Empress','The Emperor','The Hierophant','The Lovers','The Chariot','Strength','The Hermit','Wheel of Fortune','Justice','The Hanged Man','Death','Temperance','The Devil','The Tower','The Star','The Moon','The Sun','Judgement','The World','Ace of Wands','Two of Wands','Three of Wands','Four of Wands','Five of Wands','Six of Wands','Seven of Wands','Eight of Wands','Nine of Wands','Ten of Wands','Page of Wands','Knight of Wands','Queen of Wands','King of Wands','Ace of Pentacles','Two of Pentacles','Three of Pentacles','Four of Pentacles','Five of Pentacles','Six of Pentacles','Seven of Pentacles','Eight of Pentacles','Nine of Pentacles','Ten of Pentacles','Page of Pentacles','Knight of Pentacles','Queen of Pentacles','King of Pentacles','Ace of Cups','Two of Cups','Three of Cups','Four of Cups','Five of Cups','Six of Cups','Seven of Cups','Eight of Cups','Nine of Cups','Ten of Cups','Page of Cups','Knight of Cups','Queen of Cups','King of Cups','Ace of Swords','Two of Swords','Three of Swords','Four of Swords','Five of Swords','Six of Swords','Seven of Swords','Eight of Swords','Nine of Swords','Ten of Swords','Page of Swords','Knight of Swords','Queen of Swords','King of Swords'];
+	var scene = document.querySelector('a-scene');
+	scene.addEventListener('connected', function() {
+    var sync = scene.systems['sync-system'].connection;
 
-	var animationLength = 500;
-	var hoverTime = 3000;
+		var cardsPlaced = false;
+		var cardList = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77];
+		//var cardList = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21];
+		var top3 = [];
+		var cardNames = ['The Fool','The Magician','The High Priestess','The Empress','The Emperor','The Hierophant','The Lovers','The Chariot','Strength','The Hermit','Wheel of Fortune','Justice','The Hanged Man','Death','Temperance','The Devil','The Tower','The Star','The Moon','The Sun','Judgement','The World','Ace of Wands','Two of Wands','Three of Wands','Four of Wands','Five of Wands','Six of Wands','Seven of Wands','Eight of Wands','Nine of Wands','Ten of Wands','Page of Wands','Knight of Wands','Queen of Wands','King of Wands','Ace of Pentacles','Two of Pentacles','Three of Pentacles','Four of Pentacles','Five of Pentacles','Six of Pentacles','Seven of Pentacles','Eight of Pentacles','Nine of Pentacles','Ten of Pentacles','Page of Pentacles','Knight of Pentacles','Queen of Pentacles','King of Pentacles','Ace of Cups','Two of Cups','Three of Cups','Four of Cups','Five of Cups','Six of Cups','Seven of Cups','Eight of Cups','Nine of Cups','Ten of Cups','Page of Cups','Knight of Cups','Queen of Cups','King of Cups','Ace of Swords','Two of Swords','Three of Swords','Four of Swords','Five of Swords','Six of Swords','Seven of Swords','Eight of Swords','Nine of Swords','Ten of Swords','Page of Swords','Knight of Swords','Queen of Swords','King of Swords'];
 
-	deck.addEventListener('mouseup', function(){
-		//console.log('deck');
-		//reset();
-		if (cardsPlaced) {
-			hideCards();
-			cardsPlaced = false;
-		} else {
-			shuffleArray(cardList);
-			top3 = cardList.slice(0,3);
-			placeCards();
-			cardsPlaced = true;
+		var card1Revealed = false;
+		var card2Revealed = false;
+		var card3Revealed = false;
+
+		var animationLength = 500;
+		var hoverTime = 3000;
+
+		deck.addEventListener('mouseup', function(){
+			//console.log('deck');
+			//reset();
+			if (cardsPlaced) {
+				sync.instance.child('card1Revealed').set(false);
+				sync.instance.child('card2Revealed').set(false);
+				sync.instance.child('card3Revealed').set(false);
+				//hideCards();
+				cardsPlaced = false;
+			} else {
+				shuffleArray(cardList);
+				top3 = cardList.slice(0,3);
+				//placeCards();
+				cardsPlaced = true;
+				sync.instance.child('cards').set(top3);
+			}
+			sync.instance.child('cardsOnTable').set(cardsPlaced);
+		});
+
+		animTest.addEventListener('mouseup', function(){
+			if (cardsPlaced) {
+				hideCards();
+				cardsPlaced = false;
+			} else {
+				top3 = [7,14,16];
+				placeCards();
+				cardsPlaced = true;
+			}
+		});
+
+		function triggerAnimation(number, cardId){
+			switch (cardId) {
+				case 6:
+					//lovers
+					console.log(number, 'lovers');
+					break;
+				case 13:
+					//death
+					console.log(number, 'death');
+					break;
+				case 15:
+					//devil
+					console.log(number, 'devil');
+					setTimeout(function(){
+						document.querySelector('#card' + number + 'Anim').innerHTML = "<a-entity n-object='res: effects/fire'></a-entity>";
+					}, animationLength);
+					setTimeout(function(){
+						document.querySelector('#card' + number + 'Anim').innerHTML = "";
+					}, animationLength + hoverTime);
+					break;
+				default:
+					//do nothing
+			}
 		}
-	});
 
-	animTest.addEventListener('mouseup', function(){
-		//console.log('deck');
-		//reset();
-		if (cardsPlaced) {
-			hideCards();
-			cardsPlaced = false;
-		} else {
-			//shuffleArray(cardList);
-			top3 = [7,14,16];
-			placeCards();
-			cardsPlaced = true;
-		}
-	});
-
-	function triggerAnimation(number, cardId){
-		switch (cardId) {
-			case 6:
-				//lovers
-				console.log(number, 'lovers');
-				break;
-			case 13:
-				//death
-				console.log(number, 'death');
-				break;
-			case 15:
-				//devil
-				console.log(number, 'devil');
-				setTimeout(function(){
-					document.querySelector('#card' + number + 'Anim').innerHTML = "<a-entity n-object='res: effects/fire'></a-entity>";
-				}, animationLength);
-				setTimeout(function(){
-					document.querySelector('#card' + number + 'Anim').innerHTML = "";
-				}, animationLength + hoverTime);
-				break;
-			default:
-				//do nothing
-		}
-	}
-
-	function revealCard(card, number, id){
-		triggerAnimation(number, id);
-		new TWEEN.Tween(card.rotation).to({x: -Math.PI/2}, animationLength).start();
-		new TWEEN.Tween(card.position).to({y: 1.5}, animationLength).onComplete(function(){
-			document.querySelector('#card' + number + 'Text').setAttribute('position', '0 0 .4');
-			document.querySelector('#card' + number + 'Text').setAttribute('n-text', 'fontSize: 2; text:' + cardNames[id]);
-		}).start();
-
-		setTimeout(function(){
-			document.querySelector('#card' + number + 'Text').setAttribute('n-text', 'text', '');
-			document.querySelector('#card' + number + 'Text').setAttribute('position', '0 0 -.4');
-			new TWEEN.Tween(card.rotation).to({x: -Math.PI}, animationLength).delay(0).start();
-			new TWEEN.Tween(card.position).to({y: 1.06 - (number / 500)}, animationLength).delay(0).onComplete(function(){
-				document.querySelector('#card' + number + 'Text').setAttribute('n-text', 'fontSize: 1; text:' + cardNames[id]);
+		function revealCard(card, number, id){
+			triggerAnimation(number, id);
+			new TWEEN.Tween(card.rotation).to({x: -Math.PI/2}, animationLength).start();
+			new TWEEN.Tween(card.position).to({y: 1.5}, animationLength).onComplete(function(){
+				document.querySelector('#card' + number + 'Text').setAttribute('position', '0 0 .4');
+				document.querySelector('#card' + number + 'Text').setAttribute('n-text', 'fontSize: 2; text:' + cardNames[id]);
 			}).start();
-		}, animationLength + hoverTime);
-	}
+
+			setTimeout(function(){
+				document.querySelector('#card' + number + 'Text').setAttribute('n-text', 'text', '');
+				document.querySelector('#card' + number + 'Text').setAttribute('position', '0 0 -.4');
+				new TWEEN.Tween(card.rotation).to({x: -Math.PI}, animationLength).delay(0).start();
+				new TWEEN.Tween(card.position).to({y: 1.06 - (number / 500)}, animationLength).delay(0).onComplete(function(){
+					document.querySelector('#card' + number + 'Text').setAttribute('n-text', 'fontSize: 1; text:' + cardNames[id]);
+				}).start();
+			}, animationLength + hoverTime);
+		}
 
 
-	function placeCards(){
-		new TWEEN.Tween(card1.object3D.position).to({x: -.25}, 700).start();
-		new TWEEN.Tween(card2.object3D.position).to({x: .25}, 700).start();
-		new TWEEN.Tween(card3.object3D.position).to({x: .75}, 700).start();
+		function placeCards(){
+			new TWEEN.Tween(card1.object3D.position).to({x: -.25}, 700).start();
+			new TWEEN.Tween(card2.object3D.position).to({x: .25}, 700).start();
+			new TWEEN.Tween(card3.object3D.position).to({x: .75}, 700).start();
 
-		card1Front.setAttribute('src', 'cards/' + top3[0] + '.jpg');
-		card2Front.setAttribute('src', 'cards/' + top3[1] + '.jpg');
-		card3Front.setAttribute('src', 'cards/' + top3[2] + '.jpg');
-	}
+			card1Front.setAttribute('src', 'cards/' + top3[0] + '.jpg');
+			card2Front.setAttribute('src', 'cards/' + top3[1] + '.jpg');
+			card3Front.setAttribute('src', 'cards/' + top3[2] + '.jpg');
+		}
 
-	function hideCards(){
-		document.querySelector('#card1Text').setAttribute('n-text', 'text', '');
-		document.querySelector('#card2Text').setAttribute('n-text', 'text', '');
-		document.querySelector('#card3Text').setAttribute('n-text', 'text', '');
-		document.querySelector('#card1Text').setAttribute('position', '0 0 .4');
-		document.querySelector('#card2Text').setAttribute('position', '0 0 .4');
-		document.querySelector('#card3Text').setAttribute('position', '0 0 .4');
+		function hideCards(){
+			document.querySelector('#card1Text').setAttribute('n-text', 'text', '');
+			document.querySelector('#card2Text').setAttribute('n-text', 'text', '');
+			document.querySelector('#card3Text').setAttribute('n-text', 'text', '');
+			document.querySelector('#card1Text').setAttribute('position', '0 0 .4');
+			document.querySelector('#card2Text').setAttribute('position', '0 0 .4');
+			document.querySelector('#card3Text').setAttribute('position', '0 0 .4');
 
-		new TWEEN.Tween(card1.object3D.position).to({x: -.75}, 700).start();
-		new TWEEN.Tween(card2.object3D.position).to({x: -.75}, 700).start();
-		new TWEEN.Tween(card3.object3D.position).to({x: -.75}, 700).start();
+			new TWEEN.Tween(card1.object3D.position).to({x: -.75}, 700).start();
+			new TWEEN.Tween(card2.object3D.position).to({x: -.75}, 700).start();
+			new TWEEN.Tween(card3.object3D.position).to({x: -.75}, 700).start();
 
-		setTimeout(function(){
-			reset();
-		}, 700);
-	}
+			setTimeout(function(){
+				reset();
+			}, 700);
+		}
 
-	card1.addEventListener('mouseup', function(){
-		revealCard(card1.object3D, 1, top3[0]);
+		card1.addEventListener('mouseup', function(){
+			//revealCard(card1.object3D, 1, top3[0]);
+			sync.instance.child('card1Revealed').set(true);
+		});
+		card2.addEventListener('mouseup', function(){
+			//revealCard(card2.object3D, 2, top3[1]);
+			sync.instance.child('card2Revealed').set(true);
+		});
+		card3.addEventListener('mouseup', function(){
+			//revealCard(card3.object3D, 3, top3[2]);
+			sync.instance.child('card3Revealed').set(true);
+		});
+
+		function reset(){
+			card1.setAttribute('rotation', '0 0 0');
+			card2.setAttribute('rotation', '0 0 0');
+			card3.setAttribute('rotation', '0 0 0');
+		}
+
+		sync.instance.child('cards').on('value', function(data){
+			if (data.val() != null) {
+				top3 = data.val();
+			}
+			console.log('cards', data.val())
+		});
+
+		sync.instance.child('cardsOnTable').on('value', function(data){
+			if (data.val() != null) {
+				cardsPlaced = data.val();
+				if (data.val()) {
+					placeCards();
+				} else {
+					hideCards();
+				}
+			}
+			console.log('cardsOnTable', data.val())
+		});
+
+		sync.instance.child('card1Revealed').on('value', function(data){
+			if (data.val() != null) {
+				if (data.val()) {
+					revealCard(card1.object3D, 1, top3[0]);
+				}
+			}
+			console.log('card1Revealed', data.val())
+		});
+		sync.instance.child('card2Revealed').on('value', function(data){
+			if (data.val() != null) {
+				if (data.val()) {
+					revealCard(card2.object3D, 2, top3[1]);
+				}
+			}
+			console.log('card2Revealed', data.val())
+		});
+		sync.instance.child('card3Revealed').on('value', function(data){
+			if (data.val() != null) {
+				if (data.val()) {
+					revealCard(card3.object3D, 3, top3[2]);
+				}
+			}
+			console.log('card3Revealed', data.val())
+		});
+		
 	});
-	card2.addEventListener('mouseup', function(){
-		revealCard(card2.object3D, 2, top3[1]);
-	});
-	card3.addEventListener('mouseup', function(){
-		revealCard(card3.object3D, 3, top3[2]);
-	});
-
-	function reset(){
-		card1.setAttribute('rotation', '0 0 0');
-		card2.setAttribute('rotation', '0 0 0');
-		card3.setAttribute('rotation', '0 0 0');
-	}
 
 	function shuffleArray(array) {
     for (var i = array.length - 1; i > 0; i--) {
